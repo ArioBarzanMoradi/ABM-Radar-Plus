@@ -1,3 +1,5 @@
+> نسخهٔ 1.2: [نصب مستقیم از GitHub، دامنه و Web Path](guides/webpath-fa.md)
+
 <p align="center"><img src="docs/assets/favicon.svg" width="76" height="76" alt="Jamshid Plus"></p>
 <h1 align="center">جمشید پلاس · Jamshid Plus</h1>
 <p align="center">ABM Network Radar — مرکز پایش فارسی و خودمیزبان زیرساخت</p>
@@ -24,7 +26,7 @@ ZIP را روی VPS مرکزی استخراج کن و از پوشهٔ پروژه
 </div>
 
 ```bash
-unzip jamshid-plus-github-ready-v1.1.0.zip
+unzip jamshid-plus-github-ready-v1.2.0.zip
 cd jamshid-plus
 sudo bash install.sh
 ```

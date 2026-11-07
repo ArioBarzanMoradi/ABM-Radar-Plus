@@ -33,3 +33,7 @@ Python; there are no architecture-specific application binaries in the package.
     python3 -m unittest discover -s tests -v
     bash -n install.sh install-agent.sh scripts/radarctl
     python3 scripts/package.py
+
+## 1.2.0 web path update
+
+Typecheck, production build and 4 Python integration tests passed. Browser flow through a prefix-stripping HTTP reverse proxy verified login, assets, API, dialog and logout under /my-radar/. Actual user-domain TLS and systemd configuration require deployment on the server.

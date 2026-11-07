@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 — 2026-11-07
+
+- Added prefix-relative login, logout, assets and API requests behind Nginx.
+- Allowed agent base URLs with a validated web path.
+- Added certificate-based Nginx configuration with rollback and direct GitHub install wrappers.
+
+
 ## 1.1.0 — 2026-11-07
 
 - Renamed the interface and project to Jamshid Plus (جمشید پلاس).

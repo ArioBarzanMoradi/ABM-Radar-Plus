@@ -372,3 +372,12 @@ class NativePanel(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+class AgentWebPathURLs(unittest.TestCase):
+    def test_agent_web_path_validation(self):
+        from agent.agent import validate_url
+        self.assertEqual(validate_url('https://radar.example.net:10443/my-radar/'), 'https://radar.example.net:10443/my-radar')
+        self.assertEqual(validate_url('http://127.0.0.1:8788/'), 'http://127.0.0.1:8788')
+        for value in ('https://radar.example.net/../secret', 'https://radar.example.net/a%2fb', 'https://user:pass@radar.example.net/path/', 'http://radar.example.net/path/'):
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError):validate_url(value)

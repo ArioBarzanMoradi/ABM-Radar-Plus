@@ -314,7 +314,7 @@ class Sampler:
 
 def validate_url(url):
     u = urlsplit(url)
-    if not u.hostname or u.username or u.password or u.query or u.fragment or u.path not in ("", "/"):
+    if not u.hostname or u.username or u.password or u.query or u.fragment or not re.fullmatch(r"(?:/[A-Za-z0-9_-]+)*/?", u.path):
         raise ValueError("نشانی پایهٔ پنل معتبر نیست.")
     _ = u.port
     if u.scheme != "https" and not (

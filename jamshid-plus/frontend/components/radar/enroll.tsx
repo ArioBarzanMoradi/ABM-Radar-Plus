@@ -1,7 +1,7 @@
 import {useState} from "react";
 import {Radio,KeyRound,Copy,Check,ExternalLink} from "lucide-react";
 import {type Reading,dayFa,timeFa} from "@/lib/radar/model";
-import {privateAPI} from "@/client";
+import {privateAPI,panelBase} from "@/client";
 import {SectionHead,Modal,Feedback,Badge} from "./ui";
 
 export default function Enrollment({id,reading}:{id:string;reading?:Reading}){
@@ -21,7 +21,7 @@ export default function Enrollment({id,reading}:{id:string;reading?:Reading}){
     </div>{open&&<Modal title="اتصال عامل این سرور" close={close}><div className="modal-body form-stack">
     {token?<><div className="enroll-step"><b>۱</b><div><strong>کلید را کپی کن</strong><p>این کلید فقط همین بار نمایش داده می‌شود.</p></div></div><label className="field"><span>کلید اختصاصی سرور</span><input dir="ltr" readOnly type="text" value={token} onFocus={e=>e.target.select()}/></label><button className="btn fit" onClick={()=>void copy()}>{copied?<Check size={15}/>:<Copy size={15}/>} {copied?"کلید کپی شد":"کپی کلید"}</button>
     <div className="enroll-step"><b>۲</b><div><strong>نصب عامل روی همین سرور</strong><p>از پوشهٔ دانلودشدهٔ پروژه اجرا کن؛ نصب‌کننده نشانی پنل و کلید را می‌پرسد.</p></div></div><pre dir="ltr">sudo bash install-agent.sh</pre>
-    <div className="source-box"><Radio size={20}/><div><strong>نشانی اتصال</strong><p>{location.protocol==="https:"?"برای این پنل HTTPS، نشانی زیر را به نصب‌کننده بده:":"برای عامل روی میزبان پنل، نشانی محلی زیر را بده. برای سرور دیگر، نشانی HTTPS پنل یا انتهای تونل SSH روی همان سرور را وارد کن."}</p><code dir="ltr">{location.protocol==="https:"?location.origin:"http://127.0.0.1:8788"}</code></div></div>
+    <div className="source-box"><Radio size={20}/><div><strong>نشانی اتصال</strong><p>{location.protocol==="https:"?"برای این پنل HTTPS، نشانی زیر را به نصب‌کننده بده:":"برای عامل روی میزبان پنل، نشانی محلی زیر را بده. برای سرور دیگر، نشانی HTTPS پنل یا انتهای تونل SSH روی همان سرور را وارد کن."}</p><code dir="ltr">{location.protocol==="https:"?panelBase.href.replace(/\/$/,""):"http://127.0.0.1:8788"}</code></div></div>
     <p className="form-hint">اگر پورت پنل را هنگام نصب تغییر داده‌ای، پورت واقعی را وارد کن. معمولاً نخستین نمونه ظرف ۳۰ ثانیه می‌رسد.</p></>:<><p>{rotate?"با صدور کلید جدید، عامل دارای کلید قبلی باید با کلید تازه پیکربندی شود.":"این کلید فقط اجازهٔ ارسال آمار و دریافت تست‌های همین سرور را به عامل می‌دهد."}</p><button disabled={busy} className="btn primary fit" onClick={()=>void issue()}>{busy?"در حال صدور…":rotate?"جایگزینی کلید":"صدور کلید عامل"}</button></>}
     {err&&<Feedback error text={err}/>}</div></Modal>}</section>;
 }
