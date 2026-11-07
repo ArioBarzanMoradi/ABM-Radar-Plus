@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+unit=radar-infra.service
+data=/var/lib/radar-infra
+case "${1:-status}" in
+ status) exec systemctl --no-pager status "$unit" ;;
+ logs) exec journalctl -u "$unit" -n 100 --no-pager ;;
+ restart) exec systemctl restart "$unit" ;;
+ set-admin|backup)
+   [[ $EUID -eq 0 ]] || { echo 'این فرمان را با sudo اجرا کنید.' >&2; exit 1; }
+   cmd=$1
+   shift
+   if [[ $cmd = backup && $# = 0 ]]; then
+     install -d -m 0700 -o radar-panel -g radar-panel "$data/backups"
+     set -- "$data/backups/radar-$(date -u +%Y%m%dT%H%M%SZ).sqlite3"
+   fi
+   exec runuser -u radar-panel -- /usr/bin/python3 /opt/radar-infra/current/run.py --data-dir "$data" "$cmd" "$@"
+   ;;
+ *) echo 'jamshidctl {status|logs|restart|set-admin|backup}' >&2; exit 2 ;;
+esac
