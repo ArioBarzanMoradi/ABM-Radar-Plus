@@ -1,0 +1,52 @@
+"use client";
+import Enrollment from "./enroll";
+import Health from "./health";
+import {useState} from "react";
+import {Activity, Cpu, MemoryStick, PlugZap, Terminal, ListChecks, History, NotebookPen, LayoutDashboard, Plus, Server as ServerIcon, Globe2, Network, ListTree, Pencil, Check, Play, CheckCircle2, CircleAlert, ClipboardList, StickyNote, ListPlus, LoaderCircle, RadioTower, Link2} from "lucide-react";
+import { CHECK_TYPES, PORT_STATES, diagnosticForm, fa, dayFa, timeFa, toAscii, type DiagnosticForm, type Snapshot, type Server, type CheckType } from "@/lib/radar/model";
+import {Badge, SectionHead, Empty, Field, Feedback, AgentLabel, cn, type Save} from "./ui";
+import {EntryForm,type EntryMode} from "./forms";
+import {EventList, serviceState, type OpenServer} from "./fleet";
+
+function Tests({server:s,snap,save}:{server:Server;snap:Snapshot;save:Save}) {
+  const [kind,setKind]=useState<CheckType>("ping"),[target,setTarget]=useState(s.host),[port,setPort]=useState("443"),[running,setRunning]=useState(false),[error,setError]=useState(""),[visible,setVisible]=useState(3);
+  const portTest=["tcp","udp","https","tls","ipv4","ipv6","stun"].includes(kind);
+  const run=async(e:React.FormEvent)=>{e.preventDefault();if(running)return;const parsed=diagnosticForm.safeParse({kind,target:target.trim(),...(portTest?{port:Number(toAscii(port))}:{})});if(!parsed.success){setError(portTest&&(!Number(toAscii(port))||Number(toAscii(port))>65535)?"یک پورت معتبر بین ۱ و ۶۵۵۳۵ وارد کنید.":"نشانی مقصد را بررسی کنید.");return;}
+    setRunning(true);setError("");await save({type:"test.run",serverId:s.id,input:parsed.data},"نتیجهٔ تست در تاریخچه ثبت شد.");setRunning(false);
+  };
+  return <section className="panel"><SectionHead title="تست دستی شبکه" icon={Terminal}><AgentLabel/></SectionHead><div className="panel-body form-stack"><form onSubmit={run} className="form-stack">
+    <Field label="نوع تست"><select value={kind} onChange={e=>{const k=e.target.value as CheckType;setKind(k);setError("");if(k==="udp")setPort("51820");else if(k==="tcp")setPort("443");if(k==="dns"&&target===s.host)setTarget(s.domains[0]??s.host);else if(k!=="dns"&&s.domains.includes(target))setTarget(s.host);}}>{Object.entries(CHECK_TYPES).map(([k,t])=><option value={k} key={k}>{t}</option>)}</select></Field>
+    <Field label="مقصد تست"><input dir="ltr" list="test-targets" required value={target} placeholder="node.example.net" onChange={e=>setTarget(e.target.value)}/><datalist id="test-targets">{[...new Set(snap.space.servers.flatMap(s=>[s.host,...s.domains]))].map(t=><option key={t} value={t}/>)}</datalist></Field>
+    {portTest&&<Field label={kind==="udp"?"پورت UDP":"پورت TCP"}><input dir="ltr" required inputMode="numeric" value={port} onChange={e=>setPort(e.target.value)}/></Field>}
+    <p className="form-hint">مبدأ تست {s.name} است. برای مقصد، یک IP یا دامنه وارد کنید.</p>
+    {error&&<Feedback text={error} error/>}
+    <button disabled={running} className="btn primary fit">{running?<LoaderCircle size={15} className="spin"/>:<Play size={15}/>} {running?"در حال تست…":"اجرای تست"}</button>
+  </form>
+  {(s.pendingTests??0)>0&&<p className="source-box">{fa(s.pendingTests!)} تست در انتظار پاسخ عامل است. نتیجه با بازخوانی داده‌ها نمایش داده می‌شود.</p>}{s.tests.length>0&&<div className="test-history"><h3>آخرین نتایج</h3>{s.tests.slice(0,visible).map(r=><div key={r.id} className={cn("result-box",r.inconclusive?"neutral":r.ok?"pass":"fail")}><div className="result-header"><strong>{r.ok?<CheckCircle2 size={15}/>:<CircleAlert size={15}/>} {CHECK_TYPES[r.input.kind]} · {r.inconclusive?"نامشخص":r.ok?"موفق":"ناموفق"}</strong><time>{dayFa(r.at)} · {timeFa(r.at)}</time></div><bdi className="target-line">{r.input.target}{r.input.kind==="tcp"||r.input.kind==="udp"?" · "+r.input.port:""}</bdi><p>{r.summary}</p>{r.lines.map((l,i)=><div className="result-line" key={i}>{l}</div>)}<small>نتیجهٔ عامل پایش</small></div>)}{s.tests.length>visible&&<button className="text-btn" onClick={()=>setVisible(visible+5)}>نتایج بیشتر</button>}</div>}
+  </div></section>;
+}
+export function Detail({snap,server:s,tab,open,save,edit}:{snap:Snapshot;server:Server;tab:string;open:OpenServer;save:Save;edit:(n:number)=>void}) {
+  const [entry,setEntry]=useState<{mode:EntryMode;list?:string}|null>(null),[stepBusy,setStepBusy]=useState("");
+  const m=snap.telemetry.metrics[s.id],ports=m?.ports??[],services=m?.services??[],online=m?.online??false,openPorts=ports.filter(v=>v.state==="open").length;
+  const completePorts=!!(m?.portCoverage?.TCP&&m?.portCoverage?.UDP);
+  const stats=[{t:"پینگ",v:m?.ping,u:"ms",icon:Activity,tone:"blue"},{t:"مصرف پردازنده",v:m?.cpu,u:"٪",icon:Cpu,tone:"green"},{t:"مصرف حافظه",v:m?.ram,u:"٪",icon:MemoryStick,tone:"violet"},{t:"پورت‌های باز",v:online&&(openPorts>0||completePorts)?openPorts:null,u:"",icon:PlugZap,tone:"amber"}];
+  const tabs=[{id:"overview",t:"نمای کلی",icon:LayoutDashboard},{id:"health",t:"سلامت و شبکه",icon:Network},{id:"diagnostics",t:"عیب‌یابی و تست",icon:ListChecks},{id:"events",t:"رخدادها",icon:History},{id:"notes",t:"یادداشت‌ها",icon:NotebookPen}];
+  return <><div className="detail-stats">{stats.map(({t,v,u,icon:I,tone})=><div className={`panel mini-stat tint-${tone}`} key={t}><span className="kpi-icon"><I size={19}/></span><span>{t}</span><strong>{v==null?"—":fa(v)}{v!=null&&u&&<small>{u}</small>}</strong></div>)}</div>
+  <nav className="detail-tabs" aria-label="بخش‌های سرور">{tabs.map(t=><a href={`#server/${s.id}/${t.id}`} key={t.id} aria-current={t.id===tab?"page":undefined} className={cn(tab===t.id&&"active")}><t.icon size={16}/>{t.t}{t.id==="notes"&&s.notes.length>0&&<b>{fa(s.notes.length)}</b>}</a>)}</nav>
+  {tab==="overview"&&<div className="detail-grid">{snap.telemetry.source==="agent"&&<Enrollment key={s.id} id={s.id} reading={m}/>}
+    <section className="panel"><SectionHead title="مشخصات میزبان" icon={ServerIcon}><button className="icon-btn quiet" onClick={()=>edit(0)} aria-label="ویرایش مشخصات میزبان"><Pencil size={15}/></button></SectionHead><dl className="definition-list"><div><dt>نشانی میزبان</dt><dd dir="ltr">{s.host}</dd></div><div><dt>سیستم‌عامل</dt><dd dir="auto">{s.os||"—"}</dd></div><div><dt>شهر</dt><dd>{s.city||"—"}</dd></div><div><dt>گروه</dt><dd>{s.group||"بدون گروه"}</dd></div><div><dt>ثبت سرور</dt><dd>{dayFa(s.createdAt)}</dd></div></dl></section>
+    <section className="panel"><SectionHead title="سرویس‌ها و تونل‌ها" icon={Network}><button className="text-btn" onClick={()=>edit(2)}><Plus size={14}/>مدیریت سرویس‌ها</button></SectionHead>{!services.length?<Empty icon={Network} title="سرویسی ثبت نشده است"/>:services.map(v=><div className="config-row" key={v.name}>{v.kind==="tunnel"?<Link2 size={17}/>:<RadioTower size={17}/>}<strong dir="auto">{v.name}</strong><small>{v.kind==="tunnel"?"تونل":"سرویس"}</small>{v.peerId&&<button className="text-btn peer-link" onClick={()=>open(v.peerId!)}>{snap.space.servers.find(h=>h.id===v.peerId)?.name}</button>}<Badge tone={!online||v.state==="unknown"?"muted":v.state==="active"?"green":v.state==="degraded"?"amber":"red"}>{serviceState(online,v,m?.awaiting)}</Badge></div>)}</section>
+    <section className="panel"><SectionHead title={snap.telemetry.source==="agent"?"پورت‌های محلی میزبان":"پورت‌های شبکه"} icon={PlugZap}><button className="text-btn" onClick={()=>edit(1)}><Plus size={14}/>مدیریت پورت‌ها</button></SectionHead>{!ports.length?<Empty icon={PlugZap} title="پورتی ثبت نشده است"/>:ports.map(p=><div className="config-row" key={p.number+p.protocol}><Terminal size={16}/><strong dir="ltr">{p.number} / {p.protocol}</strong><Badge tone={!online||p.state==="unknown"?"muted":p.state==="open"?"green":"red"}>{online?PORT_STATES[p.state]:"نامشخص"}</Badge></div>)}</section>
+    <section className="panel"><SectionHead title="دامنه‌های سرور" icon={Globe2}><button className="text-btn" onClick={()=>edit(1)}><Plus size={14}/>مدیریت دامنه‌ها</button></SectionHead>{s.domains.length?s.domains.map(d=><div className="config-row" key={d}><Globe2 size={16}/><bdi>{d}</bdi></div>):<Empty icon={Globe2} title="دامنه‌ای ثبت نشده است"/>}</section>
+  </div>}
+  {tab==="health"&&<Health snap={snap} server={s} save={save}/>}
+  {tab==="diagnostics"&&<div className="detail-grid diagnostics-grid"><section className="panel"><SectionHead title="چک‌لیست عیب‌یابی" icon={ListChecks}><button className="text-btn" onClick={()=>setEntry({mode:"checklist"})}><Plus size={14}/>چک‌لیست جدید</button></SectionHead>
+    {s.lists.map(l=>{const done=l.steps.filter(s=>s.done).length;return <div className="checklist" key={l.id}><div className="subhead"><h3>{l.title}</h3><span>{fa(done)} از {fa(l.steps.length)}</span></div><div className="list-progress"><i style={{width:100*done/Math.max(1,l.steps.length)+"%"}}/></div>
+      {l.steps.map((step,i)=><label className={cn("check-step",step.done&&"done")} key={step.id}><input type="checkbox" checked={step.done} disabled={stepBusy===step.id} onChange={async e=>{setStepBusy(step.id);await save({type:"step.set",serverId:s.id,listId:l.id,stepId:step.id,done:e.target.checked});setStepBusy("");}}/><span className="step-no">{fa(i+1)}.</span><span>{step.title}</span></label>)}
+      <button className="text-btn add-step" onClick={()=>setEntry({mode:"step",list:l.id})}><ListPlus size={15}/>افزودن مرحله</button>
+    </div>;})}</section><Tests key={s.id} server={s} snap={snap} save={save}/></div>}
+  {tab==="events"&&<EventList space={snap.space} serverId={s.id} onServer={open} action={<button className="btn small" onClick={()=>setEntry({mode:"event"})}><Plus size={14}/>ثبت رخداد</button>}/>}
+  {tab==="notes"&&<section className="panel"><SectionHead title="یادداشت‌های سرور" icon={NotebookPen}><button className="btn small" onClick={()=>setEntry({mode:"note"})}><Plus size={14}/>افزودن یادداشت</button></SectionHead>{s.notes.length?s.notes.map(n=><div className="note-row" key={n.id}><span className="list-mark tone-violet"><StickyNote size={16}/></span><div><time>{dayFa(n.at)} · {timeFa(n.at)}</time><p>{n.body}</p></div></div>):<Empty icon={NotebookPen} title="هنوز یادداشتی برای این سرور ثبت نشده است" detail="نتیجهٔ بررسی‌ها یا نکات پیکربندی این میزبان را اینجا نگه دارید."/>}</section>}
+  {entry&&<EntryForm mode={entry.mode} listId={entry.list} serverId={s.id} save={save} close={()=>setEntry(null)}/>}
+  </>;
+}

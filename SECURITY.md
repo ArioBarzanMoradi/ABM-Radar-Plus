@@ -1,0 +1,15 @@
+# Security and operational boundaries
+
+ABM Radar Plus is a self-hosted monitoring application. Start with HTTPS, a strong unique administrator password and restricted access to the panel port. The private panel is never hosted by GitHub Pages.
+
+- Passwords use scrypt with a fresh salt. Session cookies are HttpOnly/SameSite and secure on the configured HTTPS origin. Administrative writes require a session, CSRF token and a matching Origin when supplied. Password/username changes revoke sessions.
+- Each agent has a separate random bearer key. The panel stores its hash. Agent keys authorize telemetry and typed job exchange for that host only. No arbitrary command strings are accepted; subprocesses use fixed argument arrays and timeouts.
+- Peer keys are distinct. An issuer stores only the key hash. Read access exports local observations only, excluding agent keys, session credentials, notes and other peers. Diagnostic access is opt-in and restricted to typed jobs and configured target hosts. New peer keys revoke the issuer's previous key.
+- Recipient panels must retain outbound peer keys in their private SQLite store. Treat database/config backups as secrets. They are not encrypted at rest by this application. Files are outside the source checkout and protected by Unix permissions; disk encryption is an operator choice.
+- Remote URLs require HTTPS with normal certificate/hostname verification. Plain HTTP is allowed only on loopback for co-located agents/panels and tests. Redirects carrying a key are rejected. Peer identity is pinned after a valid first response; re-enroll intentionally after a node identity change.
+- Polling, responses, timeouts, target counts and diagnostic queue lengths are bounded. Only the authenticated operator can configure peers and network targets. A connected peer with test scope can probe the target set approved in the source panel; grant scope accordingly.
+- The panel runs unprivileged with systemd filesystem protection. The agent reads system information and uses fixed diagnostic tools. Installation/update commands require root and execute trusted repository code. Review the source/ref used for an update. The updater uses HTTPS GitHub and validates the bundled dependency checksum; it does not implement signed releases or automatic background updates.
+- The installer preserves existing Plus storage/service identities through compatibility aliases. Panel code rollback occurs for restart/HTTP health failure; it does not overwrite live data with old backups. An agent-only failure leaves the successfully updated panel installed and reports partial failure.
+- TCP/UDP listeners, active VPN units, ICMP and STUN each describe specific observations. They are not a proof that every VPN works or that all inbound/outbound connectivity is open. Missing tools and stale remote data must be interpreted as unavailable/unknown.
+
+Never publish real configuration, database backups, tokens, private keys, operating panel URLs or private web paths in a public repository or issue. Report suspected defects privately to the repository owner with tokens and infrastructure details removed.

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+unit=radar-infra.service
+data=/var/lib/radar-infra
+case "${1:-status}" in
+ status) exec systemctl --no-pager status "$unit";;
+ logs) exec journalctl -u "$unit" -n 100 --no-pager;;
+ restart) exec systemctl restart "$unit";;
+ update) shift; exec bash /usr/local/lib/abm-radar-plus/update.sh "$@";;
+ show) exec runuser -u radar-panel -- /usr/bin/python3 /opt/radar-infra/current/run.py --data-dir "$data" show;;
+ set-admin|passwd|username|rotate-sessions|backup)
+  [[ $EUID -eq 0 ]] || { echo 'Run with sudo' >&2; exit 1; }
+  cmd=$1;shift
+  if [[ $cmd == backup && $# == 0 ]]; then
+   install -d -m 0700 -o radar-panel -g radar-panel "$data/backups"
+   set -- "$data/backups/abm-radar-$(date -u +%Y%m%dT%H%M%SZ).sqlite3"
+  fi
+  exec runuser -u radar-panel -- /usr/bin/python3 /opt/radar-infra/current/run.py --data-dir "$data" "$cmd" "$@";;
+ *) echo 'abm-radarctl {status|logs|restart|show|set-admin|passwd|username|rotate-sessions|backup|update}' >&2;exit 2;;
+esac

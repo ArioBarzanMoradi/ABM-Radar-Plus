@@ -1,30 +1,129 @@
-# جمشید پلاس · Jamshid Plus 1.2
+<div align="center">
+  <img src="docs/assets/favicon.svg" width="84" alt="ABM Radar Plus">
+  <h1>ABM Radar Plus</h1>
+  <p>پایش منابع، پروتکل‌ها و مسیر شبکه؛ از هر پنل، سرورهای خودت را ببین.</p>
+  <p><b>2.0.0</b> · Linux / systemd · Python 3.10+ · Persian RTL · ARM64 / x86-64</p>
+  <p><a href="README.en.md">English</a> · <a href="guides/operations-fa.md">راهنمای شبکه</a> · <a href="guides/webpath-fa.md">دامنه و WebPath</a> · <a href="CHANGELOG.md">تغییرات</a></p>
+</div>
 
-پنل فارسی پایش واقعی سرورهای لینوکسی، با رابط شیشه‌ای جمشید و پشتیبانی دامنه و Web Path.
+**ABM Radar Plus** نام جدید این پروژه است. پنل با فهرست خالی شروع می‌شود؛ سرورها، پورت‌ها و مقصدهای پایش را خودت اضافه می‌کنی. اطلاعات CPU، RAM، دیسک، ترافیک و شبکه از عامل واقعی هر میزبان دریافت می‌شود. داده‌های ناموجود با عدد نمونه پر نمی‌شوند.
 
-## نصب مستقیم روی Ubuntu
+![داشبورد ABM Radar Plus](docs/assets/dashboard-dark.png)
+
+<details><summary>پوستهٔ استخوانی</summary>
+
+![پوسته روشن](docs/assets/dashboard-light.png)
+
+</details>
+
+## امکانات نسخهٔ ۲
+
+| بخش | امکانات |
+|---|---|
+| منابع | CPU، RAM، دیسک ریشه، uptime، load، hostname و نسخهٔ kernel |
+| ترافیک | نرخ دریافت/ارسال و شمارندهٔ کل هر رابط؛ تاریخچهٔ CPU/RAM/دیسک/ترافیک/پینگ تا ۷ روز |
+| شبکهٔ میزبان | رابط‌های IPv4/IPv6، مسیرهای پیش‌فرض، DNS سیستم و TCP/UDP listeners با Bind و محدودهٔ آدرس |
+| مسیر خروجی | تا ۲۴ مقصد دلخواه برای TCP handshake و ICMP مستقل؛ تست‌های خودکار IPv4، IPv6، DNS، HTTPS و UDP/STUN |
+| VPN و تونل | کشف واحدهای شناخته‌شدهٔ systemd و رابط‌ها؛ تعریف سرویس و تونل و قواعد بررسی اختصاصی |
+| عیب‌یابی | Ping، TCP، UDP، DNS، traceroute، HTTPS، TLS/SNI، TCP روی IPv4/IPv6 و STUN از عامل منتخب |
+| شبکهٔ پنل‌ها | دریافت مستقیم پایش محلی از پنل‌های دیگر، کش آخرین پاسخ و نمایش واضح دادهٔ قدیمی؛ تست راه‌دور با مجوز صریح |
+| مدیریت | حساب مدیر، نشست امن، WebPath، SSL helper، هشدار، رخداد، یادداشت، چک‌لیست و SQLite backup |
+| ارتقا | `sudo abm-radarctl update`، حفظ تنظیمات و کلیدها، پشتیبان قبل از ارتقا و بازگشت کد هنگام شکست health check |
+| ظاهر | وزیرمتن محلی، فارسی RTL، شیشه‌ای، زغالی/استخوانی و دنبال‌کردن پوستهٔ سیستم |
+
+جدول تطبیق با امکانات رادار قبلی در [راهنمای قابلیت‌ها](guides/features-fa.md) است.
+
+## نصب از GitHub
+
+هدف استقرار، Ubuntu دارای systemd و Python 3.10+ است. Node.js برای نصب لازم نیست؛ فایل‌های آمادهٔ رابط در مخزن هستند. اجرای خودکار با systemd روی این محیط توسعه انجام نمی‌شود؛ جزئیات آزمون‌ها در [VERIFICATION.md](VERIFICATION.md) آمده است.
 
 ```bash
 sudo apt update
-sudo apt install -y git python3 curl iputils-ping traceroute
-git clone https://github.com/ArioBarzanMoradi/Jamshid-Radar-Plus.git
-cd Jamshid-Radar-Plus
-sudo bash install.sh --port 8788
+sudo apt install -y git python3 iproute2 iputils-ping traceroute
+git clone https://github.com/ArioBarzanMoradi/ABM-Radar-Plus.git
+cd ABM-Radar-Plus
+sudo bash install.sh
 ```
 
-نصب‌کننده نام کاربری و گذرواژهٔ مدیر را می‌پرسد.
-
-برای دامنه و مسیر دلخواه، پس از آماده‌کردن Nginx و گواهی معتبر دامنه:
+نصاب حساب مدیر را می‌سازد و پنل روی `127.0.0.1:8788` اجرا می‌شود. برای اولین ورود می‌توانی از ترمینال کامپیوترت SSH forwarding باز کنی:
 
 ```bash
-sudo bash configure-web.sh --domain YOUR_DOMAIN --path /YOUR_PATH/ --port 10443
+ssh -NT -L 127.0.0.1:8788:127.0.0.1:8788 USER@SERVER_IP
 ```
 
-نشانی پنل: `https://YOUR_DOMAIN:10443/YOUR_PATH/`
-پورت 443 برای VPN فعلی حفظ می‌شود.
+سپس در مرورگر `http://127.0.0.1:8788/` را باز کن. برای دسترسی روزمره با دامنه، پورت دلخواه و WebPath، [راهنمای HTTPS](guides/webpath-fa.md) را اجرا کن. نصاب پورت ۴۴۳، سرویس VPN، فایروال یا DNS سرورت را تغییر نمی‌دهد.
 
-- [راهنمای کامل دامنه، SSL و Web Path](jamshid-plus/guides/webpath-fa.md)
-- [README کامل پروژه و اتصال عامل‌ها](jamshid-plus/README.md)
-- [گزارش بررسی‌ها](jamshid-plus/VERIFICATION.md)
+## اتصال عامل
 
-سورس جاری در پوشهٔ **jamshid-plus** قرار دارد. پوشهٔ radar-infra نسخهٔ قدیمی است؛ نصب‌کنندهٔ ریشه، نسخهٔ جاری را انتخاب می‌کند.
+در «سرورها» یک میزبان ثبت کن، صفحهٔ آن را باز کن و کلید نصب عامل بگیر. روی همان میزبان اجرا کن:
+
+```bash
+sudo bash install-agent.sh
+```
+
+اگر پنل و عامل روی همان سرورند، URL عامل را `http://127.0.0.1:8788` بگذار و **کلید صادرشده از همان پنل** را وارد کن. برای عامل راه‌دور، URL کامل HTTPS پنل شامل پورت و WebPath لازم است. کلید پنل دیگر روی این پنل معتبر نیست.
+
+ICMP نیاز به بستهٔ `iputils-ping` و دسترسی ping برای کاربر عامل دارد. تنظیم مقصدهای خروجی و تست‌های دوره‌ای در «سلامت و شبکه» هر سرور است؛ تست‌های عمومی تا فعال‌کردن این گزینه غیرفعال‌اند. قواعد سرویس‌های اختصاصی در [راهنمای عملیات](guides/operations-fa.md) توضیح داده شده‌اند.
+
+## مشاهدهٔ همهٔ سرورها از هر پنل
+
+۱. روی هر میزبان یک پنل و عامل محلی داشته باش؛ عامل به پنل همان میزبان گزارش بدهد.
+
+۲. در «شبکهٔ پنل‌ها ← هویت و کلید این پنل»، نام و URL عمومی کامل را ثبت و یک **کلید شبکه** بساز. پیش‌فرض این کلید فقط خواندن پایش است؛ مجوز تست را در صورت نیاز فعال کن.
+
+۳. در پنل دیگر، «پیوند پنل» را بزن و URL و کلید شبکهٔ پنل مبدأ را وارد کن. این کلید با کلید عامل متفاوت است.
+
+۴. برای پنج پنل، در هر پنل چهار پنل دیگر را پیوند بده. دادهٔ محلی فقط یک بار صادر می‌شود؛ اطلاعات پنل‌های دیگر دوباره بازنشر نمی‌شود. بعد از ثبت پیوند، ورود بعدی به همان پنل نمای شبکه را باز می‌کند.
+
+در قطعی ایران–خارج، هر پنل پایش محلی خودش را ادامه می‌دهد؛ آمار ذخیره‌شدهٔ سایر پنل‌ها با زمان آخرین دریافت و برچسب قدیمی/نامشخص باقی می‌ماند. **این پیوندها شبکهٔ پایش می‌سازند؛ ترافیک VPN یا اینترنت را تونل نمی‌کنند.**
+
+## ارتقا روی سرور
+
+**اولین ارتقا از نسخه‌های Plus قبلی:** از پوشهٔ clone فعلی، که ممکن است هنوز نام قبلی را داشته باشد:
+
+```bash
+cd ~/Jamshid-Radar-Plus
+git pull --ff-only
+sudo bash update.sh --source "$PWD"
+```
+
+اگر checkout تغییرات محلی دارد، ابتدا آن تغییرات را بررسی و حفظ کن. GitHub آدرس clone قدیمی را پس از تغییر نام مخزن هدایت می‌کند.
+
+**ارتقاهای بعدی، بدون وابستگی به پوشهٔ clone:**
+
+```bash
+sudo abm-radarctl update
+sudo abm-radarctl show
+sudo abm-radarctl status
+```
+
+برای نسخهٔ برچسب‌خورده، `sudo abm-radarctl update --ref TAG` را به‌کار ببر؛ TAG باید واقعاً در مخزن وجود داشته باشد. `--source /trusted/checkout` نیز برای به‌روزرسانی از سورس محلی آماده است. دانلود شکست‌خورده، ارتقا را متوقف می‌کند.
+
+قبل از نصب، SQLite با API پشتیبان آنلاین کپی و تنظیمات در `/var/backups/abm-radar-plus/` با دسترسی محدود ذخیره می‌شوند. تغییرات schema افزایشی‌اند. در شکست restart یا HTTP health check پنل، کد و فایل سرویس قبلی بازگردانده می‌شوند. اگر فقط عامل شکست بخورد، پنل جدید باقی می‌ماند و عامل قبلی بازگردانده می‌شود؛ فرمان خروج ناموفق و پیام روشن دارد. بازگشت خودکار، دیتابیس زنده را با backup قدیمی جایگزین نمی‌کند.
+
+نصب قبلی Plus حساب‌ها، کلیدها، مقصد پینگ، پورت، دیتابیس و Nginx/WebPath را نگه می‌دارد. مسیرهای قدیمی `/etc/radar-infra` و سرویس `radar-infra` برای سازگاری عملیاتی حفظ می‌شوند؛ نام‌های `abm-radar-plus.service` و `/etc/abm-radar-plus` نیز به همان نصب اشاره می‌کنند. فرمان‌های قدیمی `radarctl` و `jamshidctl` alias سازگاری‌اند. تغییر نام پروژه، مسیر ورود دلخواه فعلی را عوض نمی‌کند.
+
+## مدیریت روزمره
+
+```bash
+sudo abm-radarctl passwd
+sudo abm-radarctl username
+sudo abm-radarctl rotate-sessions
+sudo abm-radarctl logs
+sudo abm-radarctl backup
+```
+
+فایل backup نباید از قبل وجود داشته باشد. نام کاربری/گذرواژهٔ جدید، نشست‌های قبلی را باطل می‌کند. کلیدهای عامل و پنل از داخل حساب مدیر مدیریت می‌شوند.
+
+## توسعه و بررسی
+
+```bash
+npm ci --no-audit --no-fund
+npm run typecheck
+npm run build
+python3 -m unittest discover -s tests -v
+bash -n install.sh install-agent.sh scripts/update.sh scripts/enable-ssl.sh scripts/radarctl
+python3 scripts/package.py
+```
+
+سایت معرفی آمادهٔ GitHub Pages در `docs/` است. Pages فقط معرفی و راهنما را میزبانی می‌کند؛ پنل خصوصی روی سرورت اجرا می‌شود. [راهنمای GitHub](GITHUB-SETUP.md)، [امنیت](SECURITY.md) و [گزارش آزمون](VERIFICATION.md) را ببین. مجوز سورس جدید MIT است؛ مجوز وابستگی‌ها در `licenses/` آمده است.

@@ -1,6 +1,0 @@
-{
-  "3x-ui": {"unit": "x-ui.service"},
-  "WireGuard": {"interface": "wg0"},
-  "Outline": {"listen": {"protocol":"TCP","port":23456}},
-  "تونل آلمان": {"unit":"rathole.service"}
-}
